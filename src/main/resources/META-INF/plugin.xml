@@ -1,0 +1,134 @@
+<idea-plugin>
+    <id>com.sterbenden.clockedin</id>
+    <name>Clocked In</name>
+    <vendor>SterbenDen</vendor>
+
+    <description><![CDATA[
+    <p>Track your working hours with one clock that you and your AI agents share. Start,
+    pause and stop it yourself from the IDE, or let an agent such as Claude Code do it while
+    it works on your requests.</p>
+
+    <h3>Features</h3>
+    <ul>
+      <li><b>Toolbar clock:</b> sits next to the run controls and shows the time worked in
+          the current session, with the same play, pause and stop icons as the buttons.</li>
+      <li><b>Start, Pause and Stop</b> buttons next to the clock. Pause is a break inside
+          the session and Resume carries on with it; Stop ends the session and resets the
+          clock.</li>
+      <li><b>⋮ menu:</b> This Week (today's and this week's totals), Print Timesheet, Export to CSV (with a paid column and a paid filter),
+          the tool window, Add Session, and Install Agent Skill.</li>
+      <li><b>Clocked In tool window:</b> today's and this week's totals, split into time you
+          started and time agents started. Show sessions for any date range or all dates, and
+          add, edit and delete them.</li>
+      <li><b>Paid tracking:</b> tick sessions as paid, filter to unpaid or paid sessions,
+          tick several rows to mark them paid, unpaid or delete them, and see what's still
+          unpaid.</li>
+      <li><b>Agent tools:</b> <code>clock_in</code>, <code>clock_pause</code>,
+          <code>clock_out</code>, <code>clock_status</code> and <code>clock_report</code> on
+          the IDE's built-in MCP server.</li>
+      <li><b>You stay in control:</b> every agent start, pause or stop shows a notification
+          with <b>Undo</b>. Agents can't pause or stop a session you started, and they can't
+          end a break you took.</li>
+      <li><b>Agent skill:</b> run <code>/clocked-in</code> in an agent session. The agent
+          starts or resumes the clock for each request and pauses it when it's done. It only
+          clocks you out when you ask.</li>
+    </ul>
+
+    <h3>Getting started</h3>
+    <ol>
+      <li>Use ▶ Start, ⏸ Pause and ■ Stop next to the toolbar clock, <i>Tools | Clocked In</i>,
+          or <kbd>Ctrl+Alt+Shift+K</kbd> (pause, or start and resume).</li>
+      <li>To let agents use the clock, enable the MCP server in
+          <i>Settings | Tools | MCP Server</i> and connect your agent there.</li>
+      <li>Choose <b>⋮</b> → <i>Install Agent Skill…</i>. Pick <b>All Projects</b> or
+          <b>This Project</b> for Claude Code, or copy the skill for another agent.</li>
+      <li>In an agent session, run <code>/clocked-in</code>. Run <code>/clocked-in off</code>
+          to stop tracking, or <code>/clocked-in stop</code> to clock out.</li>
+    </ol>
+
+    <h3>Good to know</h3>
+    <ul>
+      <li>There's no idle detection: the clock runs until you or an agent pauses or stops
+          it. Closing the IDE clocks you out.</li>
+      <li>The IDE's MCP server needs an open project for tool calls. If your agent works in
+          a folder that isn't open in the IDE, the skill tells it to pass any open project;
+          the clock is the same for all of them.</li>
+      <li>Each IDE (for example IntelliJ IDEA and Rider) keeps its own clock.</li>
+    </ul>
+
+    <h3>Privacy</h3>
+    <p>Your sessions are stored only on your computer, in the IDE's configuration folder.
+    The plugin sends nothing over the network.</p>
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends optional="true" config-file="clockedin-mcp.xml">com.intellij.mcpServer</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <statusBarWidgetFactory id="ClockedInWidget"
+                                implementation="com.sterbenden.clockedin.ui.ClockStatusBarWidgetFactory"/>
+        <toolWindow id="Clocked In" anchor="bottom" icon="/icons/clockedIn.svg"
+                    factoryClass="com.sterbenden.clockedin.ui.ClockToolWindowFactory"/>
+        <notificationGroup id="Clocked In" displayType="BALLOON"/>
+        <postStartupActivity implementation="com.sterbenden.clockedin.skill.SkillUpdateCheck"/>
+    </extensions>
+
+    <applicationListeners>
+        <listener class="com.sterbenden.clockedin.service.ClockShutdownListener"
+                  topic="com.intellij.ide.AppLifecycleListener"/>
+    </applicationListeners>
+
+    <actions>
+        <!-- Tools | Clocked In -->
+        <group id="ClockedIn.Menu" text="Clocked In" popup="true" icon="/icons/clockedIn.svg">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <action id="ClockedIn.ClockIn" class="com.sterbenden.clockedin.ui.ClockInAction"
+                    text="Start" description="Start the work clock, or resume it after a break"
+                    icon="AllIcons.Actions.Execute"/>
+            <action id="ClockedIn.Pause" class="com.sterbenden.clockedin.ui.PauseAction"
+                    text="Pause" description="Take a break; Resume continues the clock"
+                    icon="AllIcons.Actions.Pause"/>
+            <action id="ClockedIn.ClockOut" class="com.sterbenden.clockedin.ui.ClockOutAction"
+                    text="Stop" description="Clock out"
+                    icon="AllIcons.Actions.Suspend"/>
+            <action id="ClockedIn.Toggle" class="com.sterbenden.clockedin.ui.ToggleClockAction"
+                    text="Start / Pause" description="Pause the clock if it's running, otherwise start or resume it">
+                <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift K"/>
+            </action>
+            <separator/>
+            <group id="ClockedIn.More" text="More" popup="false">
+                <action id="ClockedIn.Summary" class="com.sterbenden.clockedin.ui.ShowSummaryAction"
+                        text="This Week" description="Show today's and this week's totals and recent sessions"/>
+                <action id="ClockedIn.PrintTimesheet" class="com.sterbenden.clockedin.ui.PrintTimesheetAction"
+                        text="Print Timesheet…" description="Open a timesheet for a date range in your browser to print it or save it as a PDF"
+                        icon="AllIcons.Graph.Print"/>
+                <action id="ClockedIn.ExportCsv" class="com.sterbenden.clockedin.ui.ExportCsvAction"
+                        text="Export Sessions to CSV…" description="Save sessions for a date range as a CSV file"
+                        icon="AllIcons.ToolbarDecorator.Export"/>
+                <separator/>
+                <action id="ClockedIn.OpenToolWindow" class="com.sterbenden.clockedin.ui.OpenToolWindowAction"
+                        text="Open Clocked In Tool Window" description="Show all sessions and totals"/>
+                <action id="ClockedIn.AddSession" class="com.sterbenden.clockedin.ui.AddSessionAction"
+                        text="Add Session…" description="Add a session you forgot to track"
+                        icon="AllIcons.General.Add"/>
+                <action id="ClockedIn.InstallSkill" class="com.sterbenden.clockedin.skill.InstallSkillAction"
+                        text="Install Agent Skill…" description="Install the clocked-in skill for AI agents"/>
+            </group>
+        </group>
+
+        <!-- Main toolbar, next to the run controls: time, Start, Pause, Stop and ⋮ -->
+        <group id="ClockedIn.Toolbar" text="Clocked In" popup="false">
+            <add-to-group group-id="RunToolbarMainActionGroup" anchor="first"/>
+            <action id="ClockedIn.ToolbarClock" class="com.sterbenden.clockedin.ui.ToolbarClockAction"
+                    text="Clocked In Clock" description="Today's worked time; click for a summary"/>
+            <reference ref="ClockedIn.ClockIn"/>
+            <reference ref="ClockedIn.Pause"/>
+            <reference ref="ClockedIn.ClockOut"/>
+            <group id="ClockedIn.ToolbarMore" text="More Clocked In Actions" popup="true"
+                   icon="AllIcons.Actions.More" description="Print, export, summary, add session, agent skill">
+                <reference ref="ClockedIn.More"/>
+            </group>
+            <separator/>
+        </group>
+    </actions>
+</idea-plugin>

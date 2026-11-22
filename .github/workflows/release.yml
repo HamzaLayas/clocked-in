@@ -1,0 +1,51 @@
+# Publishes a GitHub release when a version tag (for example v0.2.0) is pushed. The release
+# carries the plugin ZIP and updatePlugins.xml, which IDEs use to install and update the plugin
+# from https://github.com/<owner>/<repo>/releases/latest/download/updatePlugins.xml.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Check the tag matches pluginVersion
+        run: |
+          version=$(grep '^pluginVersion=' gradle.properties | cut -d= -f2)
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME doesn't match pluginVersion=$version in gradle.properties" >&2
+            exit 1
+          fi
+
+      - name: Test, verify and build
+        run: ./gradlew test verifyPlugin githubReleaseFiles -PgithubRepository=${{ github.repository }}
+
+      - name: Release notes from CHANGELOG.md
+        run: |
+          version=${GITHUB_REF_NAME#v}
+          awk -v v="## $version" '$0 == v {on=1; next} /^## / {on=0} on' CHANGELOG.md > release-notes.md
+          test -s release-notes.md || echo "Clocked In $version" > release-notes.md
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            build/distributions/clocked-in-*.zip \
+            build/distributions/updatePlugins.xml \
+            --title "Clocked In ${GITHUB_REF_NAME#v}" \
+            --notes-file release-notes.md
