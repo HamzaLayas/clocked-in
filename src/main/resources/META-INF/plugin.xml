@@ -15,7 +15,7 @@
       <li><b>Start, Pause and Stop</b> buttons next to the clock. Pause is a break inside
           the session and Resume carries on with it; Stop ends the session and resets the
           clock.</li>
-      <li><b>⋮ menu:</b> This Week (today's and this week's totals), Print Timesheet, Export Unpaid Hours (a spreadsheet to hand in, with hours per day and weekly totals),
+      <li><b>⋮ menu:</b> This Week (today's and this week's totals), Print Timesheet, Export Unpaid Timesheet (an Excel timesheet to hand in, with weekly totals and hours per day),
           the tool window, Add Session, and Install Agent Skill.</li>
       <li><b>Clocked In tool window:</b> today's and this week's totals, split into time you
           started and time agents started. Show sessions for any date range or all dates, and
@@ -103,7 +103,7 @@
                         text="Print Timesheet…" description="Open a timesheet for a date range in your browser to print it or save it as a PDF"
                         icon="AllIcons.General.Print"/>
                 <action id="ClockedIn.ExportUnpaid" class="com.sterbenden.clockedin.ui.ExportUnpaidAction"
-                        text="Export Unpaid Hours…" description="Save all unpaid hours as a spreadsheet: a summary by week, then one sheet per week with the hours per day"
+                        text="Export Unpaid Timesheet…" description="Save all unpaid hours as an Excel timesheet to hand in: weekly totals, then one page per week with the hours per day"
                         icon="AllIcons.ToolbarDecorator.Export"/>
                 <separator/>
                 <action id="ClockedIn.OpenToolWindow" class="com.sterbenden.clockedin.ui.OpenToolWindowAction"

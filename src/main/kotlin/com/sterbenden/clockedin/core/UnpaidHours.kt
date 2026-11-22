@@ -4,8 +4,8 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.time.format.TextStyle
 import java.time.temporal.IsoFields
+import com.sterbenden.clockedin.core.Xlsx.Style as S
 import java.util.Locale
 
 /** Hours worked on one day, in whole seconds. */
@@ -39,52 +39,90 @@ object UnpaidHours {
         return days.groupBy { Reports.weekStart(it.date) }.map { (monday, inWeek) -> WeekHours(monday, inWeek) }
     }
 
-    private val DAY_TITLE = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH)
+    private val LONG_DATE = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH)
+    private val SHORT_DATE = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH)
 
-    /** A workbook with a Summary sheet listing each week, then one sheet per week listing its days. */
-    fun workbook(weeks: List<WeekHours>, exportedOn: LocalDate): List<Xlsx.Sheet> {
-        val total = weeks.sumOf { it.seconds }
-        val summary = buildList<List<Xlsx.Cell>> {
-            add(listOf(Xlsx.Cell.Text("Unpaid hours", bold = true)))
-            add(listOf(Xlsx.Cell.Text("Exported ${exportedOn.format(Formats.DATE)}")))
-            add(emptyList())
-            add(listOf("Week", "From", "To", "Hours").map { Xlsx.Cell.Text(it, bold = true) })
-            for (w in weeks) {
-                add(
-                    listOf(
-                        Xlsx.Cell.Text(weekLabel(w)),
-                        Xlsx.Cell.Text(w.monday.format(Formats.DATE)),
-                        Xlsx.Cell.Text(w.sunday.format(Formats.DATE)),
-                        Xlsx.Cell.Duration(w.seconds),
-                    ),
-                )
-            }
-            add(listOf(Xlsx.Cell.Text("Total", bold = true), Xlsx.Cell.Text(""), Xlsx.Cell.Text(""), Xlsx.Cell.Duration(total, bold = true)))
+    /** `SUM(B9,B17,…)` for the week totals; Excel takes at most 255 arguments per function. */
+    private fun grandTotal(cells: List<String>): String =
+        cells.chunked(250).joinToString("+") { "SUM(${it.joinToString(",")})" }
+
+    /** The first and last day with hours, for the title and the file name. */
+    fun period(weeks: List<WeekHours>): Pair<LocalDate, LocalDate> =
+        weeks.first().days.first().date to weeks.last().days.last().date
+
+    /**
+     * A timesheet workbook to hand in. The first sheet lists every day grouped by week, with
+     * each week's total under its days and a grand total. Each week then has its own sheet
+     * (one printed page) listing its days and their total. Totals
+     * are formulas, so they can be checked in the spreadsheet. [name] is shown under the
+     * title when it isn't blank.
+     */
+    fun workbook(weeks: List<WeekHours>, preparedOn: LocalDate, name: String = ""): List<Xlsx.Sheet> {
+        require(weeks.isNotEmpty()) { "There are no hours to put on a timesheet." }
+        val (first, last) = period(weeks)
+        val sheetNames = weekSheetNames(weeks)
+        val footer = listOf("Timesheet", name.trim()).filter { it.isNotEmpty() }.joinToString(" · ")
+
+        fun header(rows: MutableList<List<Xlsx.Cell>>, title: String, period: String) {
+            rows += listOf(Xlsx.Cell.Text(title, S.TITLE))
+            if (name.isNotBlank()) rows += listOf(Xlsx.Cell.Text("Name", S.LABEL), Xlsx.Cell.Text(name.trim(), S.VALUE))
+            rows += listOf(Xlsx.Cell.Text("Period", S.LABEL), Xlsx.Cell.Text(period, S.VALUE))
+            rows += listOf(Xlsx.Cell.Text("Prepared", S.LABEL), Xlsx.Cell.Date(preparedOn, S.VALUE_DATE))
+            rows += emptyList<Xlsx.Cell>()
         }
-        val sheets = mutableListOf(Xlsx.Sheet("Summary", summary, listOf(18, 12, 12, 12)))
+
+        val weekSheets = weeks.mapIndexed { index, w ->
+            val rows = mutableListOf<List<Xlsx.Cell>>()
+            header(rows, weekLabel(w), "${w.monday.format(LONG_DATE)} – ${w.sunday.format(LONG_DATE)}")
+            rows += listOf(Xlsx.Cell.Text("Date", S.HEADER), Xlsx.Cell.Text("Hours", S.HEADER_RIGHT))
+            val headerRows = rows.size
+            for (d in w.days) rows += listOf(Xlsx.Cell.Date(d.date, S.CELL_DATE), Xlsx.Cell.Hours(d.seconds, S.CELL_HOURS))
+            val firstDay = Xlsx.address(1, headerRows)
+            val lastDay = Xlsx.address(1, rows.size - 1)
+            rows += listOf(
+                Xlsx.Cell.Text("Week total", S.TOTAL),
+                Xlsx.Cell.HoursFormula("SUM($firstDay:$lastDay)", w.seconds, S.TOTAL_HOURS),
+            )
+            rows += emptyList<Xlsx.Cell>()
+            rows += listOf(Xlsx.Cell.Text("Hours are hours:minutes:seconds worked, not counting breaks.", S.NOTE))
+            Xlsx.Sheet(sheetNames[index], rows, widths = listOf(34, 14), freezeRows = headerRows, footer = footer)
+        }
+
+        // Summary: every day, grouped by week, each week followed by its total, then the grand total.
+        val summary = mutableListOf<List<Xlsx.Cell>>()
+        header(summary, "Timesheet", "${first.format(LONG_DATE)} – ${last.format(LONG_DATE)}")
+        summary += listOf(Xlsx.Cell.Text("Date", S.HEADER), Xlsx.Cell.Text("Hours", S.HEADER_RIGHT))
+        val headerRows = summary.size
+        val weekTotalCells = mutableListOf<String>()
         for (w in weeks) {
-            val rows = buildList<List<Xlsx.Cell>> {
-                add(listOf(Xlsx.Cell.Text(weekLabel(w), bold = true)))
-                add(listOf(Xlsx.Cell.Text("${w.monday.format(DAY_TITLE)} – ${w.sunday.format(DAY_TITLE)}")))
-                add(emptyList())
-                add(listOf("Date", "Day", "Hours").map { Xlsx.Cell.Text(it, bold = true) })
-                for (d in w.days) {
-                    add(
-                        listOf(
-                            Xlsx.Cell.Text(d.date.format(Formats.DATE)),
-                            Xlsx.Cell.Text(d.date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH)),
-                            Xlsx.Cell.Duration(d.seconds),
-                        ),
-                    )
-                }
-                add(listOf(Xlsx.Cell.Text("Week total", bold = true), Xlsx.Cell.Text(""), Xlsx.Cell.Duration(w.seconds, bold = true)))
-            }
-            sheets += Xlsx.Sheet("${w.year}-W${"%02d".format(w.week)}", rows, listOf(14, 12, 12))
+            summary += listOf(
+                Xlsx.Cell.Text("${weekLabel(w)}  ·  ${w.monday.format(SHORT_DATE)} – ${w.sunday.format(SHORT_DATE)}", S.SECTION),
+                Xlsx.Cell.Text("", S.SECTION),
+            )
+            val firstDay = summary.size
+            for (d in w.days) summary += listOf(Xlsx.Cell.Date(d.date, S.CELL_DATE), Xlsx.Cell.Hours(d.seconds, S.CELL_HOURS))
+            val range = "${Xlsx.address(1, firstDay)}:${Xlsx.address(1, summary.size - 1)}"
+            weekTotalCells += Xlsx.address(1, summary.size)
+            summary += listOf(Xlsx.Cell.Text("Week ${w.week} total", S.TOTAL), Xlsx.Cell.HoursFormula("SUM($range)", w.seconds, S.TOTAL_HOURS))
+            summary += emptyList<Xlsx.Cell>()
         }
-        return sheets
+        summary += listOf(
+            Xlsx.Cell.Text("Total", S.TOTAL),
+            Xlsx.Cell.HoursFormula(grandTotal(weekTotalCells), weeks.sumOf { it.seconds }, S.TOTAL_HOURS),
+        )
+        summary += emptyList<Xlsx.Cell>()
+        summary += listOf(Xlsx.Cell.Text("Hours are hours:minutes:seconds worked, not counting breaks. Each week also has its own page.", S.NOTE))
+
+        return listOf(Xlsx.Sheet("Timesheet", summary, widths = listOf(40, 14), freezeRows = headerRows, footer = footer)) + weekSheets
     }
 
     fun weekLabel(w: WeekHours): String = "Week ${w.week}, ${w.year}"
+
+    /** "Week 47", or "Week 47 (2027)" when the export spans more than one year. */
+    private fun weekSheetNames(weeks: List<WeekHours>): List<String> {
+        val oneYear = weeks.map { it.year }.distinct().size == 1
+        return weeks.map { if (oneYear) "Week ${it.week}" else "Week ${it.week} (${it.year})" }
+    }
 
     private fun date(epochMs: Long, zone: ZoneId): LocalDate = Instant.ofEpochMilli(epochMs).atZone(zone).toLocalDate()
 }

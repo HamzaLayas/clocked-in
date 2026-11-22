@@ -73,7 +73,10 @@ intellijPlatform {
         }
         changeNotes = """
             <ul>
-              <li>Print Timesheet shows its printer icon again. Opening the ⋮ menu no longer logs an IDE error.</li>
+              <li>Export Unpaid Timesheet makes a formatted Excel timesheet to hand in: your name, the period,
+                  every day grouped by week with weekly totals and a grand total, and a page per week.</li>
+              <li>Header rows, borders, highlighted totals, written-out dates, hh:mm:ss hours and formula totals.
+                  Each page prints to the page width with page numbers.</li>
             </ul>
         """.trimIndent()
     }

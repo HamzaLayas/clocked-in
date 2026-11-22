@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.4
+
+- **Export Unpaid Timesheet** (was Export Unpaid Hours) makes a formatted Excel timesheet
+  to hand in:
+  - A title with your name, the period and the date it was prepared.
+  - The first page lists every day, grouped by week, with each week's total and a grand
+    total. Each week also has its own page.
+  - Dates are written out, for example "Tuesday, 17 November 2026", and hours are in
+    hh:mm:ss.
+  - Header rows, borders and highlighted totals. Totals are formulas, so they can be
+    checked in the spreadsheet.
+  - Each page prints to the page width, with page numbers in the footer.
+- The name you enter for the timesheet is remembered for the next export.
+
 ## 0.1.3
 
 - Print Timesheet shows its printer icon again. Opening the ⋮ menu no longer logs an IDE

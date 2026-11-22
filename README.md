@@ -13,7 +13,7 @@ while it works on your requests.
 - **Start, Pause and Stop buttons** right next to the clock. Pause starts a break inside
   the current session, and Resume carries on with the same session. Stop ends the
   session; the next Start begins a new one.
-- **⋮ menu:** This Week (a summary of today and this week), Print Timesheet, Export Unpaid Hours, the
+- **⋮ menu:** This Week (a summary of today and this week), Print Timesheet, Export Unpaid Timesheet, the
   Clocked In tool window, Add Session, and Install Agent Skill.
 - **Clocked In tool window:** your current state, today's and this week's totals (split
   into time you started and time agents started), and a list of sessions for any date
@@ -79,11 +79,15 @@ The **⋮** menu has everything else:
 - **Print Timesheet…:** choose a date range, or **All dates**. The timesheet, with every session, daily
   totals and a grand total, opens in your web browser with its print dialog. Print it,
   or choose **Save as PDF**. This works even if no printer is set up.
-- **Export Unpaid Hours…:** save every session that isn't marked paid as an Excel
-  spreadsheet (`.xlsx`) to hand in. The first sheet lists each week and its total, with
-  a grand total. Then there's one sheet per week, with the hours for each day and the
-  week's total. Hours are in hh:mm:ss and don't include breaks. Mark the sessions paid
-  in the tool window once they're paid, and they're left out of the next export.
+- **Export Unpaid Timesheet…:** save every session that isn't marked paid as a formatted
+  Excel timesheet (`.xlsx`) to hand in. Enter the name to show on it (it's remembered).
+  - The first page lists every day, grouped by week, with each week's total and a grand
+    total.
+  - Each week also has its own page, with its days and total, ready to print.
+  - Hours are in hh:mm:ss and don't include breaks. Totals are formulas, so they can be
+    checked in the spreadsheet.
+  - Once the hours are paid, mark those sessions paid in the tool window, and the next
+    timesheet leaves them out.
 - **Open Clocked In Tool Window:** see all sessions and totals.
 - **Add Session…:** add time you forgot to track.
 - **Install Agent Skill…:** see the next section.
