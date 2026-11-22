@@ -24,6 +24,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.lang.management.ManagementFactory
 import java.time.Instant
 import java.time.ZoneId
 
@@ -76,7 +77,7 @@ class ClockService(scope: CoroutineScope) {
         val data = store.load()
         store.lastLoadProblem?.let { thisLogger().warn(it) }
         ledger = ClockLedger(data)
-        ledger.recoverAfterCrash()?.let {
+        ledger.recoverAfterCrash(ManagementFactory.getRuntimeMXBean().startTime)?.let {
             thisLogger().info("Closed a session left running by an unclean shutdown at ${Instant.ofEpochMilli(it.end!!)}")
             persist()
         }
@@ -173,7 +174,7 @@ class ClockService(scope: CoroutineScope) {
     private fun now(): Long = System.currentTimeMillis()
 
     companion object {
-        private const val HEARTBEAT_MS = 60_000L
+        private const val HEARTBEAT_MS = 10_000L
 
         fun getInstance(): ClockService = service()
     }

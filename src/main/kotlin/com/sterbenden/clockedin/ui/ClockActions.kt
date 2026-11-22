@@ -16,7 +16,10 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.ui.InplaceButton
+import com.intellij.util.ui.JBFont
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.JBColor
 import com.intellij.openapi.ui.popup.IconButton
@@ -35,13 +38,17 @@ import com.sterbenden.clockedin.service.ClockListener
 import com.sterbenden.clockedin.service.ClockNotifier
 import com.sterbenden.clockedin.service.ClockService
 import com.sterbenden.clockedin.service.ClockStatus
+import java.awt.BorderLayout
 import java.awt.Color
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
 import java.awt.Cursor
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.nio.file.Files
 import java.time.Instant
 import javax.swing.JComponent
+import javax.swing.JPanel
 import javax.swing.Timer
 
 /** Shared helpers for the clock's UI. All actions here act as [Actor.ME]. */
@@ -172,45 +179,85 @@ object ClockUi {
 
     /** A small popup with the current state, today's and this week's totals, and recent sessions. */
     fun showSummary(project: Project?, anchor: JComponent?) {
-        val service = ClockService.getInstance()
-        val status = service.status()
-        val zone = service.zone
-        val recent = service.sessions().sortedByDescending { it.start }.take(5)
-        val html = buildString {
-            append("<html><body>")
-            append("<b>").append(escape(stateDescription(status))).append("</b><br><br>")
-            append("<table cellpadding='2'>")
-            append("<tr><td>Today</td><td>").append(escape(describe(status.today))).append("</td></tr>")
-            append("<tr><td>This week</td><td>").append(escape(describe(status.week))).append("</td></tr>")
-            append("</table>")
-            if (recent.isNotEmpty()) {
-                append("<br><b>Recent sessions</b><table cellpadding='2'>")
-                for (s in recent) {
-                    append("<tr><td>").append(Formats.dateTime(s.start, zone)).append("</td><td>")
-                        .append(s.end?.let { Formats.time(it, zone) } ?: if (s.openBreak != null) "on a break" else "running")
-                        .append("</td><td>")
-                        .append(Formats.duration(s.durationMs(status.now))).append("</td><td>")
-                        .append(escape(startedByLabel(s))).append("</td></tr>")
-                }
-                append("</table>")
-            }
-            append("</body></html>")
-        }
-        val label = JBLabel(html).apply { border = JBUI.Borders.empty(8, 12) }
-        val popup = JBPopupFactory.getInstance().createComponentPopupBuilder(label, null)
-            .setTitle(SUMMARY_TITLE)
-            .setCancelButton(IconButton("Close", AllIcons.Actions.Close, AllIcons.Actions.CloseHovered))
+        var popup: JBPopup? = null
+        val content = summaryPanel(ClockService.getInstance()) { popup?.cancel() }
+        popup = JBPopupFactory.getInstance().createComponentPopupBuilder(content, null)
             .setCancelOnClickOutside(true)
             .setCancelKeyEnabled(true)
-            .setRequestFocus(false)
+            .setRequestFocus(true)
             .setResizable(false)
-            .setMovable(true)
+            .setMovable(false)
             .createPopup()
         when {
             anchor != null && anchor.isShowing -> popup.showUnderneathOf(anchor)
             project != null -> popup.showCenteredInCurrentWindow(project)
             else -> popup.showInFocusCenter()
         }
+    }
+
+    /** The summary's content: a header with the title and a close button, then the totals. */
+    internal fun summaryPanel(service: ClockService, onClose: () -> Unit): JComponent {
+        val status = service.status()
+        val zone = service.zone
+        val recent = service.sessions().sortedByDescending { it.start }.take(5)
+        val background = JBUI.CurrentTheme.Popup.BACKGROUND
+        val secondary = UIUtil.getContextHelpForeground()
+
+        val root = JPanel(BorderLayout()).apply {
+            this.background = background
+            border = JBUI.Borders.empty(6, 12, 10, 8)
+        }
+
+        val close = InplaceButton(IconButton("Close", AllIcons.Actions.Close, AllIcons.Actions.CloseHovered)) { onClose() }
+            .apply { toolTipText = "Close"; accessibleContext.accessibleName = "Close" }
+        val header = JPanel(BorderLayout()).apply {
+            isOpaque = false
+            border = JBUI.Borders.emptyBottom(6)
+            add(JBLabel(SUMMARY_TITLE).apply { font = JBFont.label().asBold() }, BorderLayout.WEST)
+            add(close, BorderLayout.EAST)
+        }
+        root.add(header, BorderLayout.NORTH)
+
+        val body = JPanel(GridBagLayout()).apply { isOpaque = false; border = JBUI.Borders.emptyRight(4) }
+        val c = GridBagConstraints().apply { anchor = GridBagConstraints.WEST; gridy = 0 }
+        fun cell(text: String, x: Int, color: Color? = null, bold: Boolean = false, span: Int = 1, icon: javax.swing.Icon? = null) {
+            c.gridx = x
+            c.gridwidth = span
+            c.insets = JBUI.insets(2, 0, 2, 16)
+            body.add(JBLabel(text).apply {
+                this.icon = icon
+                if (color != null) foreground = color
+                if (bold) font = JBFont.label().asBold()
+            }, c)
+        }
+
+        cell(stateDescription(status), 0, color(status.state), span = 4, icon = stateIcon(status.state))
+        c.gridy++
+        c.insets = JBUI.insets(6, 0, 0, 0)
+        body.add(javax.swing.Box.createVerticalStrut(JBUI.scale(4)), c)
+        c.gridy++
+        cell("Today", 0, secondary)
+        cell(describe(status.today), 1, span = 3)
+        c.gridy++
+        cell("This week", 0, secondary)
+        cell(describe(status.week), 1, span = 3)
+        c.gridy++
+
+        if (recent.isNotEmpty()) {
+            body.add(javax.swing.Box.createVerticalStrut(JBUI.scale(8)), c.apply { gridx = 0; gridwidth = 4 })
+            c.gridy++
+            cell("Recent sessions", 0, bold = true, span = 4)
+            c.gridy++
+            for (s in recent) {
+                val end = s.end?.let { Formats.time(it, zone) } ?: if (s.openBreak != null) "on a break" else "running"
+                cell("${Formats.dateTime(s.start, zone)} – $end", 0, span = 2)
+                cell(Formats.duration(s.durationMs(status.now)), 2)
+                cell(startedByLabel(s), 3, secondary)
+                c.gridy++
+            }
+        }
+        root.add(body, BorderLayout.CENTER)
+        return root
     }
 
     /**
@@ -237,7 +284,6 @@ object ClockUi {
         }
     }
 
-    private fun escape(text: String): String = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 }
 
 abstract class ClockAction : DumbAwareAction() {

@@ -73,11 +73,11 @@ intellijPlatform {
         }
         changeNotes = """
             <ul>
-              <li>All durations are shown as hh:mm:ss: worked and break time, totals, This Week,
-                  notifications and the printed timesheet.</li>
-              <li>Start and end times include seconds.</li>
-              <li>CSV export has <code>break</code> and <code>worked</code> columns in hh:mm:ss; <code>hours</code> stays.</li>
-              <li>Seconds are optional when editing a session.</li>
+              <li>Export Unpaid Hours replaces the CSV export: every unpaid session as an Excel spreadsheet,
+                  with a summary of weekly totals and one sheet per week with hours per day.</li>
+              <li>The This Week window has a working close button and uses the IDE's theme colors.</li>
+              <li>Updating the plugin no longer stops a running clock or ends a break.</li>
+              <li>After a crash, at most about 10 seconds of work are lost instead of up to a minute.</li>
             </ul>
         """.trimIndent()
     }

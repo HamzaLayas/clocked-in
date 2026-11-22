@@ -35,7 +35,7 @@ class PluginWiringTest : BasePlatformTestCase() {
         val manager = ActionManager.getInstance()
         for (id in listOf(
             "ClockedIn.Toggle", "ClockedIn.ClockIn", "ClockedIn.Pause", "ClockedIn.ClockOut", "ClockedIn.Summary",
-            "ClockedIn.PrintTimesheet", "ClockedIn.ExportCsv", "ClockedIn.OpenToolWindow", "ClockedIn.AddSession",
+            "ClockedIn.PrintTimesheet", "ClockedIn.ExportUnpaid", "ClockedIn.OpenToolWindow", "ClockedIn.AddSession",
             "ClockedIn.InstallSkill",
         )) {
             assertNotNull(id, manager.getAction(id))
@@ -54,7 +54,7 @@ class PluginWiringTest : BasePlatformTestCase() {
         val more = manager.getAction("ClockedIn.More") as com.intellij.openapi.actionSystem.DefaultActionGroup
         val moreIds = more.getChildActionsOrStubs().mapNotNull { manager.getId(it) }
         assertEquals(
-            listOf("ClockedIn.Summary", "ClockedIn.PrintTimesheet", "ClockedIn.ExportCsv", "ClockedIn.OpenToolWindow", "ClockedIn.AddSession", "ClockedIn.InstallSkill"),
+            listOf("ClockedIn.Summary", "ClockedIn.PrintTimesheet", "ClockedIn.ExportUnpaid", "ClockedIn.OpenToolWindow", "ClockedIn.AddSession", "ClockedIn.InstallSkill"),
             moreIds,
         )
     }

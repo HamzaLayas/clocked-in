@@ -298,6 +298,22 @@ class UiSnapshotTest : BasePlatformTestCase() {
         snapshot(label, "toolbar-clock-paused.png", label.preferredSize.width + 4, label.preferredSize.height + 4)
     }
 
+    fun `test summary shows totals and its close button closes it`() {
+        val service = ClockService.getInstance()
+        service.clockIn(Actor.ME)
+        service.pause(Actor.ME)
+        var closed = 0
+        val panel = ClockUi.summaryPanel(service) { closed++ }
+        val texts = allOf<JLabel>(panel).map { it.text }
+        assertTrue(texts.toString(), ClockUi.SUMMARY_TITLE in texts)
+        assertTrue(texts.toString(), "Today" in texts && "This week" in texts && "Recent sessions" in texts)
+        assertTrue(texts.toString(), texts.any { it.endsWith("on a break") })
+        allOf<com.intellij.ui.InplaceButton>(panel).single().doClick()
+        assertEquals(1, closed)
+        val size = panel.preferredSize
+        snapshot(panel, "summary-paused.png", size.width, size.height)
+    }
+
     fun `test totals split always adds up`() {
         val clock = ClockService.getInstance()
         val now = System.currentTimeMillis()

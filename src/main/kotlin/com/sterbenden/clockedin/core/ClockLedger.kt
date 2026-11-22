@@ -135,11 +135,19 @@ class ClockLedger(
     }
 
     /**
-     * Called at startup. An open session means the IDE did not shut down cleanly: it is
-     * closed when its break began, or otherwise at the last heartbeat.
+     * Called at startup. An open session that was last active before this IDE process
+     * started means the IDE did not shut down cleanly: it is closed when its break began, or
+     * otherwise at the last heartbeat. A session active since [processStart] belongs to this
+     * IDE process, for example when the plugin is updated without a restart, so it is kept.
      */
-    fun recoverAfterCrash(): Session? {
+    fun recoverAfterCrash(processStart: Long = Long.MAX_VALUE): Session? {
         val current = open ?: return null
+        val lastActive = maxOf(
+            heartbeat ?: current.start,
+            current.start,
+            current.breaks.maxOfOrNull { it.end ?: it.start } ?: current.start,
+        )
+        if (lastActive >= processStart) return null
         val pause = current.openBreak
         val closed = current.copy(
             end = pause?.start ?: maxOf(current.start, heartbeat ?: current.start),

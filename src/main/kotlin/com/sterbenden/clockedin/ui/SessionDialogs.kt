@@ -7,7 +7,6 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
 import com.intellij.util.ui.FormBuilder
 import com.sterbenden.clockedin.core.Formats
-import com.sterbenden.clockedin.core.PaidFilter
 import java.time.LocalDate
 import java.time.ZoneId
 import javax.swing.JComponent
@@ -62,17 +61,15 @@ class SessionTimesDialog(
     }
 }
 
-/** Picks an inclusive date range and, when [askPaid] is set, which sessions to include by paid status. */
+/** Picks an inclusive date range, or all dates. */
 class DateRangeDialog(
     project: Project?,
     title: String,
     from: LocalDate,
     to: LocalDate,
-    private val askPaid: Boolean = false,
 ) : DialogWrapper(project) {
     private val fromField = JBTextField(from.toString(), 10)
     private val toField = JBTextField(to.toString(), 10)
-    private val paidBox = com.intellij.openapi.ui.ComboBox(PaidFilter.entries.toTypedArray())
     internal val allDatesBox = com.intellij.ui.components.JBCheckBox("All dates").apply {
         addActionListener {
             fromField.isEnabled = !isSelected
@@ -82,9 +79,6 @@ class DateRangeDialog(
 
     /** True when every session should be included, whatever the dates. */
     val allDates: Boolean get() = allDatesBox.isSelected
-
-    /** Which sessions to include. Always [PaidFilter.ALL] unless [askPaid] is set. */
-    val paidFilter: PaidFilter get() = if (askPaid) paidBox.selectedItem as PaidFilter else PaidFilter.ALL
 
     lateinit var from: LocalDate
         private set
@@ -100,7 +94,6 @@ class DateRangeDialog(
         .addLabeledComponent("From:", fromField)
         .addLabeledComponent("To:", toField)
         .addComponent(allDatesBox)
-        .apply { if (askPaid) addLabeledComponent("Sessions:", paidBox) }
         .addComponent(JBLabel("Format: yyyy-MM-dd, both days included").apply { componentStyle = com.intellij.util.ui.UIUtil.ComponentStyle.SMALL })
         .panel
 

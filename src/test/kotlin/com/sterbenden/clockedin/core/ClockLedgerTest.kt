@@ -89,6 +89,35 @@ class ClockLedgerTest {
     }
 
     @Test
+    fun `reloading the plugin in the same IDE process keeps the session open`() {
+        val l = ledger()
+        l.clockIn(Actor.ME, 10 * min)
+        l.beat(70 * min)
+        val reloaded = ledger(l.snapshot())
+        assertNull(reloaded.recoverAfterCrash(processStart = 5 * min))
+        assertTrue(reloaded.open!!.isRunning)
+    }
+
+    @Test
+    fun `reloading the plugin keeps a break that began in the same IDE process`() {
+        val l = ledger()
+        l.clockIn(Actor.ME, 0)
+        l.pause(Actor.ME, 30 * min)
+        val reloaded = ledger(l.snapshot())
+        assertNull(reloaded.recoverAfterCrash(processStart = 20 * min))
+        assertEquals(30 * min, reloaded.open!!.openBreak!!.start)
+    }
+
+    @Test
+    fun `a session last active before the IDE started is recovered`() {
+        val l = ledger()
+        l.clockIn(Actor.ME, 0)
+        l.beat(7 * min)
+        val reloaded = ledger(l.snapshot())
+        assertEquals(7 * min, reloaded.recoverAfterCrash(processStart = 60 * min)!!.end)
+    }
+
+    @Test
     fun `beat does nothing when stopped`() {
         val l = ledger()
         assertEquals(false, l.beat(5))

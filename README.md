@@ -13,7 +13,7 @@ while it works on your requests.
 - **Start, Pause and Stop buttons** right next to the clock. Pause starts a break inside
   the current session, and Resume carries on with the same session. Stop ends the
   session; the next Start begins a new one.
-- **⋮ menu:** This Week (a summary of today and this week), Print Timesheet, Export to CSV, the
+- **⋮ menu:** This Week (a summary of today and this week), Print Timesheet, Export Unpaid Hours, the
   Clocked In tool window, Add Session, and Install Agent Skill.
 - **Clocked In tool window:** your current state, today's and this week's totals (split
   into time you started and time agents started), and a list of sessions for any date
@@ -79,11 +79,11 @@ The **⋮** menu has everything else:
 - **Print Timesheet…:** choose a date range, or **All dates**. The timesheet, with every session, daily
   totals and a grand total, opens in your web browser with its print dialog. Print it,
   or choose **Save as PDF**. This works even if no printer is set up.
-- **Export Sessions to CSV…:** save sessions for a date range, or **All dates**, as a
-  spreadsheet file. Choose whether to include all, only unpaid, or only paid sessions.
-  Start and end times, `break` and `worked` are in hh:mm:ss. `worked` doesn't include
-  breaks, and `hours` repeats it as a decimal for adding up. There's also a `paid`
-  column.
+- **Export Unpaid Hours…:** save every session that isn't marked paid as an Excel
+  spreadsheet (`.xlsx`) to hand in. The first sheet lists each week and its total, with
+  a grand total. Then there's one sheet per week, with the hours for each day and the
+  week's total. Hours are in hh:mm:ss and don't include breaks. Mark the sessions paid
+  in the tool window once they're paid, and they're left out of the next export.
 - **Open Clocked In Tool Window:** see all sessions and totals.
 - **Add Session…:** add time you forgot to track.
 - **Install Agent Skill…:** see the next section.
@@ -150,9 +150,10 @@ paused it yourself, the agent leaves your break alone.
 
 - **No idle detection.** The clock runs until you or an agent pauses or stops it.
 - **Closing the IDE clocks you out.** After a crash, the session ends at the last time
-  the IDE was running.
+  the IDE was running, at most about 10 seconds before the crash.
+- **Updating the plugin doesn't stop the clock.** A running session or a break carries on.
 - **Sessions that cross midnight are counted on both days** in totals, the timesheet
-  and the CSV export.
+  and the unpaid hours export.
 - **Weeks run Monday to Sunday.**
 - **Each IDE keeps its own clock.** For example, IntelliJ IDEA and Rider each track
   separately.

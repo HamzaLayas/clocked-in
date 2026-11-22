@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.2
+
+- **Export Unpaid Hours** replaces the CSV export. It saves every session that isn't
+  marked paid as an Excel spreadsheet to hand in: a summary sheet with each week's total
+  and a grand total, then one sheet per week with the hours for each day.
+- The This Week window has a working close button and uses the IDE's theme colors.
+- Updating the plugin no longer stops a running clock or ends a break. The session
+  carries on as if nothing happened.
+- After a crash, the session ends at most about 10 seconds before the crash, instead of
+  up to a minute.
+
 ## 0.1.1
 
 - All durations are shown as hh:mm:ss: worked and break time in the session list, the
