@@ -83,6 +83,18 @@ class PluginWiringTest : BasePlatformTestCase() {
         assertTrue(enabled("ClockedIn.ClockOut").first)
     }
 
+    fun `test every icon in plugin xml exists in the IDE`() {
+        val xml = javaClass.classLoader.getResource("META-INF/plugin.xml")!!.readText()
+        val icons = Regex("""icon="AllIcons\.([A-Za-z.]+)"""").findAll(xml).map { it.groupValues[1] }.toList()
+        assertTrue(icons.isNotEmpty())
+        for (icon in icons) {
+            val group = "com.intellij.icons.AllIcons$" + icon.substringBeforeLast('.').replace('.', '$')
+            val field = icon.substringAfterLast('.')
+            val found = runCatching { Class.forName(group).getField(field).get(null) }.getOrNull()
+            assertNotNull("AllIcons.$icon doesn't exist in this IDE", found)
+        }
+    }
+
     fun `test summary window is called This Week`() {
         assertEquals("This Week", ActionManager.getInstance().getAction("ClockedIn.Summary").templateText)
         assertEquals("This Week", com.sterbenden.clockedin.ui.ClockUi.SUMMARY_TITLE)

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.3
+
+- Print Timesheet shows its printer icon again. Opening the ⋮ menu no longer logs an IDE
+  error.
+
 ## 0.1.2
 
 - **Export Unpaid Hours** replaces the CSV export. It saves every session that isn't

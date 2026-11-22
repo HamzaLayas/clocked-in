@@ -101,7 +101,7 @@
                         text="This Week" description="Show today's and this week's totals and recent sessions"/>
                 <action id="ClockedIn.PrintTimesheet" class="com.sterbenden.clockedin.ui.PrintTimesheetAction"
                         text="Print Timesheet…" description="Open a timesheet for a date range in your browser to print it or save it as a PDF"
-                        icon="AllIcons.Graph.Print"/>
+                        icon="AllIcons.General.Print"/>
                 <action id="ClockedIn.ExportUnpaid" class="com.sterbenden.clockedin.ui.ExportUnpaidAction"
                         text="Export Unpaid Hours…" description="Save all unpaid hours as a spreadsheet: a summary by week, then one sheet per week with the hours per day"
                         icon="AllIcons.ToolbarDecorator.Export"/>
