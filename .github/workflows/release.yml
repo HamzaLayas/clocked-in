@@ -1,11 +1,18 @@
-# Publishes a GitHub release when a version tag (for example v0.2.0) is pushed. The release
-# carries the plugin ZIP and updatePlugins.xml, which IDEs use to install and update the plugin
-# from https://github.com/<owner>/<repo>/releases/latest/download/updatePlugins.xml.
+# Publishes a GitHub release. It runs only when started by hand (Actions > Release > Run
+# workflow) with the version tag to release, for example v0.2.0. The tag must already be
+# pushed. Releases are normally made from a developer machine instead; see the release steps.
+# The release carries the plugin ZIP and updatePlugins.xml, which IDEs use to install and
+# update the plugin from
+# https://github.com/<owner>/<repo>/releases/latest/download/updatePlugins.xml.
 name: Release
 
 on:
-  push:
-    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Version tag to release, for example v0.2.0"
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -13,8 +20,12 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      TAG: ${{ inputs.tag }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ inputs.tag }}
 
       - uses: actions/setup-java@v4
         with:
@@ -26,8 +37,8 @@ jobs:
       - name: Check the tag matches pluginVersion
         run: |
           version=$(grep '^pluginVersion=' gradle.properties | cut -d= -f2)
-          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
-            echo "Tag $GITHUB_REF_NAME doesn't match pluginVersion=$version in gradle.properties" >&2
+          if [ "v$version" != "$TAG" ]; then
+            echo "Tag $TAG doesn't match pluginVersion=$version in gradle.properties" >&2
             exit 1
           fi
 
@@ -36,7 +47,7 @@ jobs:
 
       - name: Release notes from CHANGELOG.md
         run: |
-          version=${GITHUB_REF_NAME#v}
+          version=${TAG#v}
           awk -v v="## $version" '$0 == v {on=1; next} /^## / {on=0} on' CHANGELOG.md > release-notes.md
           test -s release-notes.md || echo "Clocked In $version" > release-notes.md
 
@@ -44,8 +55,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
+          gh release create "$TAG" \
             build/distributions/clocked-in-*.zip \
             build/distributions/updatePlugins.xml \
-            --title "Clocked In ${GITHUB_REF_NAME#v}" \
+            --verify-tag \
+            --latest \
+            --title "Clocked In ${TAG#v}" \
             --notes-file release-notes.md
