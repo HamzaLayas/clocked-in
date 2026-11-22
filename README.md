@@ -81,8 +81,9 @@ The **⋮** menu has everything else:
   or choose **Save as PDF**. This works even if no printer is set up.
 - **Export Sessions to CSV…:** save sessions for a date range, or **All dates**, as a
   spreadsheet file. Choose whether to include all, only unpaid, or only paid sessions.
-  The file has `break_minutes` and `paid` columns; `minutes` and `hours` are worked
-  time without breaks.
+  Start and end times, `break` and `worked` are in hh:mm:ss. `worked` doesn't include
+  breaks, and `hours` repeats it as a decimal for adding up. There's also a `paid`
+  column.
 - **Open Clocked In Tool Window:** see all sessions and totals.
 - **Add Session…:** add time you forgot to track.
 - **Install Agent Skill…:** see the next section.

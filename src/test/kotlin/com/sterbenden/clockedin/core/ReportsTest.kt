@@ -88,9 +88,10 @@ class ReportsTest {
 
     @Test
     fun `duration formatting`() {
-        assertEquals("0m", Formats.duration(0))
-        assertEquals("45m", Formats.duration(45 * m + 59_000))
-        assertEquals("3h 05m", Formats.duration(3 * h + 5 * m))
+        assertEquals("00:00:00", Formats.duration(0))
+        assertEquals("00:45:59", Formats.duration(45 * m + 59_000))
+        assertEquals("03:05:00", Formats.duration(3 * h + 5 * m))
+        assertEquals("09:30:15", Formats.time(at("2026-11-22T09:30") + 15_000, zone))
     }
 
     @Test
@@ -111,9 +112,9 @@ class ReportsTest {
         )
         val html = Timesheet.html(sessions, LocalDate.parse("2026-11-16"), LocalDate.parse("2026-11-18"), zone, at("2026-11-22T00:00"))
         assertTrue(html.contains("2026-11-17 total"))
-        assertTrue(html.contains("1h 30m"))
+        assertTrue(html.contains("01:30:00"))
         assertTrue(html.contains("Claude Code"))
-        assertTrue(html.contains("(you 1h 00m, agents 30m)"))
+        assertTrue(html.contains("(you 01:00:00, agents 00:30:00)"))
         val empty = Timesheet.html(emptyList(), LocalDate.parse("2026-11-16"), LocalDate.parse("2026-11-16"), zone, at("2026-11-22T00:00"))
         assertTrue(empty.contains("No sessions in this period."))
         assertTrue(html.startsWith("<!DOCTYPE html>") && !html.contains("window.print"))
@@ -127,6 +128,7 @@ class ReportsTest {
     @Test
     fun `date and time parsing`() {
         assertEquals(at("2026-11-22T09:30"), Formats.parseDateTime(" 2026-11-22 09:30 ", zone))
+        assertEquals(at("2026-11-22T09:30") + 45_000, Formats.parseDateTime("2026-11-22 09:30:45", zone))
         assertEquals(null, Formats.parseDateTime("2026-11-22 25:00", zone))
         assertEquals(null, Formats.parseDate("22.11.2026"))
     }

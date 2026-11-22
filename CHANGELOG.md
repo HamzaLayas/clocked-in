@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.1
+
+- All durations are shown as hh:mm:ss: worked and break time in the session list, the
+  totals, the This Week window, notifications and the printed timesheet.
+- Start and end times include seconds.
+- CSV export has `break` and `worked` columns in hh:mm:ss, and start and end times with
+  seconds. The `hours` column stays for adding up in a spreadsheet.
+- When editing a session, seconds are optional.
+
 ## 0.1.0
 
 First release.
@@ -23,7 +32,7 @@ First release.
 - Tick rows (or Select all) to mark them paid or unpaid, or delete them.
 - Printable timesheet for any date range, with every session, daily totals and a grand
   total. It opens in your web browser, where you can print it or save it as a PDF.
-- CSV export for any date range or all dates, with `break_minutes` and `paid` columns and a choice of all,
+- CSV export for any date range or all dates, with `break`, `worked` (hh:mm:ss), `hours` and `paid` columns and a choice of all,
   unpaid or paid sessions. Sessions that cross midnight are split by day.
 - MCP tools for agents on the IDE's built-in MCP server: `clock_in`, `clock_pause`,
   `clock_out`, `clock_status` and `clock_report`.

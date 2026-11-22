@@ -12,8 +12,8 @@ object Timesheet {
     fun html(sessions: List<Session>, from: LocalDate, to: LocalDate, zone: ZoneId, now: Long, autoPrint: Boolean = false): String {
         val pieces = Reports.dayPieces(sessions, from, to, zone, now)
         val total = Reports.totals(sessions, Reports.startOf(from, zone), Reports.startOf(to.plusDays(1), zone), now)
-        val agentMinutes = Formats.minutes(total.agentStartedMs)
-        val youMinutes = Formats.minutes(total.totalMs) - agentMinutes
+        val agentSeconds = Formats.seconds(total.agentStartedMs)
+        val youSeconds = Formats.seconds(total.totalMs) - agentSeconds
 
         val sb = StringBuilder()
         sb.append("<!DOCTYPE html><html><head><meta charset='utf-8'>")
@@ -37,7 +37,7 @@ object Timesheet {
                 sb.append("<tr><td>").append(date.format(Formats.DATE)).append("</td>")
                     .append("<td>").append(Formats.time(piece.start, zone)).append("</td>")
                     .append("<td>").append(endLabel(piece, now, zone)).append("</td>")
-                    .append("<td align='right'>").append(if (piece.breakMs > 0) Formats.duration(piece.breakMs) else "").append("</td>")
+                    .append("<td align='right'>").append(Formats.duration(piece.breakMs)).append("</td>")
                     .append("<td align='right'>").append(Formats.duration(piece.workedMs)).append("</td>")
                     .append("<td>").append(escape(startedBy(s))).append("</td>")
                     .append("<td>").append(if (s.paid) "Paid" else "").append("</td></tr>")
@@ -48,8 +48,8 @@ object Timesheet {
         }
         sb.append("</table>")
         sb.append("<p><b>Total: ").append(Formats.duration(total.totalMs)).append("</b> (you ")
-            .append(Formats.duration(youMinutes * 60_000)).append(", agents ")
-            .append(Formats.duration(agentMinutes * 60_000)).append(")</p>")
+            .append(Formats.duration(youSeconds * 1000)).append(", agents ")
+            .append(Formats.duration(agentSeconds * 1000)).append(")</p>")
         sb.append("<p style='font-size: 9pt'>Printed ").append(Formats.dateTime(now, zone)).append(" by Clocked In</p>")
         sb.append("</body></html>")
         return sb.toString()

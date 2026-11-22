@@ -72,17 +72,12 @@ intellijPlatform {
             untilBuild = provider { null }
         }
         changeNotes = """
-            <p>First release.</p>
             <ul>
-              <li>One work clock that you and your AI agents share.</li>
-              <li>Toolbar clock next to the run controls, showing the current session's worked time as hh:mm:ss.</li>
-              <li>Start, Pause and Stop. Pause is a break inside the session; Stop ends it and resets the clock.</li>
-              <li>⋮ menu: This Week summary, Print Timesheet (print or save as PDF from your browser), Export to CSV, Add Session, and more.</li>
-              <li>Clocked In tool window: any date range or all dates, totals, and session editing.</li>
-              <li>Paid tracking: Paid checkbox per session, paid/unpaid filter, tick rows to mark paid, unpaid or delete, and paid and break columns in CSV exports.</li>
-              <li>Agent tools <code>clock_in</code>, <code>clock_pause</code>, <code>clock_out</code>,
-                  <code>clock_status</code> and <code>clock_report</code>, with Undo for every agent change.</li>
-              <li><code>/clocked-in</code> agent skill: agents pause after each request and only clock you out when you ask.</li>
+              <li>All durations are shown as hh:mm:ss: worked and break time, totals, This Week,
+                  notifications and the printed timesheet.</li>
+              <li>Start and end times include seconds.</li>
+              <li>CSV export has <code>break</code> and <code>worked</code> columns in hh:mm:ss; <code>hours</code> stays.</li>
+              <li>Seconds are optional when editing a session.</li>
             </ul>
         """.trimIndent()
     }

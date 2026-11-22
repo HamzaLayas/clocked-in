@@ -28,9 +28,9 @@ class CsvAndStoreTest {
         val csv = CsvExport.export(sessions, LocalDate.parse("2026-11-20"), LocalDate.parse("2026-11-21"), zone, at("2026-11-21T09:30"))
         val lines = csv.trimEnd().lines()
         assertEquals(CsvExport.HEADER, lines[0])
-        assertEquals("2026-11-20,23:00,00:00,0,60,1.00,agent,me,\"Claude, Code\",no", lines[1])
-        assertEquals("2026-11-21,00:00,01:00,0,60,1.00,agent,me,\"Claude, Code\",no", lines[2])
-        assertEquals("2026-11-21,09:00,09:30,0,30,0.50,me,running,,no", lines[3])
+        assertEquals("2026-11-20,23:00:00,00:00:00,00:00:00,01:00:00,1.00,agent,me,\"Claude, Code\",no", lines[1])
+        assertEquals("2026-11-21,00:00:00,01:00:00,00:00:00,01:00:00,1.00,agent,me,\"Claude, Code\",no", lines[2])
+        assertEquals("2026-11-21,09:00:00,09:30:00,00:00:00,00:30:00,0.50,me,running,,no", lines[3])
         assertEquals(4, lines.size)
     }
 
@@ -38,7 +38,7 @@ class CsvAndStoreTest {
     fun `csv only includes the requested days`() {
         val sessions = listOf(Session("a", at("2026-11-20T23:00"), at("2026-11-21T01:00"), Actor.ME, Actor.ME))
         val csv = CsvExport.export(sessions, LocalDate.parse("2026-11-21"), LocalDate.parse("2026-11-21"), zone, at("2026-11-22T00:00"))
-        assertEquals(listOf(CsvExport.HEADER, "2026-11-21,00:00,01:00,0,60,1.00,me,me,,no"), csv.trimEnd().lines())
+        assertEquals(listOf(CsvExport.HEADER, "2026-11-21,00:00:00,01:00:00,00:00:00,01:00:00,1.00,me,me,,no"), csv.trimEnd().lines())
     }
 
     @Test
@@ -53,9 +53,9 @@ class CsvAndStoreTest {
         val all = CsvExport.export(sessions, day, day, zone, now).trimEnd().lines()
         assertEquals(listOf("yes", "no"), all.drop(1).map { it.substringAfterLast(',') })
         val unpaid = CsvExport.export(sessions, day, day, zone, now, PaidFilter.UNPAID).trimEnd().lines()
-        assertEquals(listOf("2026-11-21,11:00,12:00,0,60,1.00,me,me,,no"), unpaid.drop(1))
+        assertEquals(listOf("2026-11-21,11:00:00,12:00:00,00:00:00,01:00:00,1.00,me,me,,no"), unpaid.drop(1))
         val paid = CsvExport.export(sessions, day, day, zone, now, PaidFilter.PAID).trimEnd().lines()
-        assertEquals(listOf("2026-11-21,09:00,10:00,0,60,1.00,me,me,,yes"), paid.drop(1))
+        assertEquals(listOf("2026-11-21,09:00:00,10:00:00,00:00:00,01:00:00,1.00,me,me,,yes"), paid.drop(1))
     }
 
     @Test
@@ -66,7 +66,7 @@ class CsvAndStoreTest {
         )
         val day = LocalDate.parse("2026-11-21")
         val lines = CsvExport.export(listOf(s), day, day, zone, at("2026-11-22T00:00")).trimEnd().lines()
-        assertEquals("2026-11-21,09:00,12:00,30,150,2.50,me,me,,no", lines[1])
+        assertEquals("2026-11-21,09:00:00,12:00:00,00:30:00,02:30:00,2.50,me,me,,no", lines[1])
     }
 
     @Test

@@ -114,16 +114,14 @@ object Reports {
 
 object Formats {
     val DATE: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE
-    val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
-    val DATE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+    val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
+    val DATE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+    private val DATE_TIME_NO_SECONDS: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 
-    /** "0m", "45m", "3h 05m". */
-    fun duration(ms: Long): String {
-        val minutes = ms.coerceAtLeast(0) / 60_000
-        val h = minutes / 60
-        val m = minutes % 60
-        return if (h == 0L) "${m}m" else "${h}h ${m.toString().padStart(2, '0')}m"
-    }
+    /** Every duration is shown as hh:mm:ss: "00:00:00", "00:45:12", "03:05:00". */
+    fun duration(ms: Long): String = clock(ms)
+
+    fun seconds(ms: Long): Long = ms.coerceAtLeast(0) / 1000
 
     fun minutes(ms: Long): Long = ms.coerceAtLeast(0) / 60_000
 
@@ -149,10 +147,14 @@ object Formats {
 
     fun isoInstant(epochMs: Long): String = Instant.ofEpochMilli(epochMs).toString()
 
-    /** Parses "yyyy-MM-dd HH:mm" in [zone]. Returns null when the text is not a valid date and time. */
-    fun parseDateTime(text: String, zone: ZoneId): Long? = runCatching {
-        LocalDateTime.parse(text.trim(), DATE_TIME).atZone(zone).toInstant().toEpochMilli()
-    }.getOrNull()
+    /** Parses "yyyy-MM-dd HH:mm:ss" (seconds optional) in [zone]. Returns null when it isn't a valid date and time. */
+    fun parseDateTime(text: String, zone: ZoneId): Long? {
+        val trimmed = text.trim()
+        for (format in listOf(DATE_TIME, DATE_TIME_NO_SECONDS)) {
+            runCatching { return LocalDateTime.parse(trimmed, format).atZone(zone).toInstant().toEpochMilli() }
+        }
+        return null
+    }
 
     fun parseDate(text: String): LocalDate? = runCatching { LocalDate.parse(text.trim(), DATE) }.getOrNull()
 }

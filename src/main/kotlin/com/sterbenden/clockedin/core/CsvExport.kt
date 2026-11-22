@@ -6,11 +6,12 @@ import java.util.Locale
 
 /**
  * CSV export, one row per session per day. Sessions that cross midnight are split so every
- * row belongs to one day. `minutes` and `hours` are worked time, without breaks. An open
+ * row belongs to one day. `break` and `worked` are hh:mm:ss; `hours` is worked time as a
+ * decimal for adding up in a spreadsheet. An open
  * session is exported up to [now] with `stopped_by` set to `running` or `on_break`.
  */
 object CsvExport {
-    const val HEADER = "date,start,end,break_minutes,minutes,hours,started_by,stopped_by,agent,paid"
+    const val HEADER = "date,start,end,break,worked,hours,started_by,stopped_by,agent,paid"
 
     fun export(
         sessions: List<Session>,
@@ -28,8 +29,8 @@ object CsvExport {
             sb.append(piece.date.format(Formats.DATE)).append(',')
                 .append(Formats.time(piece.start, zone)).append(',')
                 .append(Formats.time(piece.end, zone)).append(',')
-                .append(Formats.minutes(piece.breakMs)).append(',')
-                .append(Formats.minutes(ms)).append(',')
+                .append(Formats.duration(piece.breakMs)).append(',')
+                .append(Formats.duration(ms)).append(',')
                 .append(String.format(Locale.ROOT, "%.2f", ms / 3_600_000.0)).append(',')
                 .append(actor(s.startedBy)).append(',')
                 .append(

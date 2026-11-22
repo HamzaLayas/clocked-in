@@ -41,7 +41,7 @@ class SessionTimesDialog(
     override fun createCenterPanel(): JComponent = FormBuilder.createFormBuilder()
         .addLabeledComponent("Start:", startField)
         .addLabeledComponent("End:", endField)
-        .addComponent(JBLabel("Format: yyyy-MM-dd HH:mm").apply { componentStyle = com.intellij.util.ui.UIUtil.ComponentStyle.SMALL })
+        .addComponent(JBLabel("Format: yyyy-MM-dd HH:mm:ss (seconds optional)").apply { componentStyle = com.intellij.util.ui.UIUtil.ComponentStyle.SMALL })
         .panel
 
     override fun getPreferredFocusedComponent(): JComponent = startField

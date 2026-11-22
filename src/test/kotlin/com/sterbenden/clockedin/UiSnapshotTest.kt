@@ -74,7 +74,7 @@ class UiSnapshotTest : BasePlatformTestCase() {
         var labels = allOf<JLabel>(panel).map { it.text.orEmpty() }
         assertTrue(labels.toString(), labels.any { it.startsWith("00:30:0") })
         assertTrue(labels.toString(), labels.any { it.startsWith("Clocked in since") && it.contains("by Claude Code") })
-        assertTrue(labels.toString(), labels.any { it.startsWith("Today 1h 30m (you 1h 00m, agents 30m)") })
+        assertTrue(labels.toString(), labels.any { it.startsWith("Today 01:30:0") && it.contains("(you 01:00:00, agents 00:30:0") })
         assertEquals(mapOf("Start" to false, "Pause" to true, "Stop" to true), buttons(panel))
         assertEquals(2, table.rowCount)
         assertEquals("running", table.getValueAt(0, Columns.END))
@@ -129,12 +129,12 @@ class UiSnapshotTest : BasePlatformTestCase() {
         assertEquals(com.sterbenden.clockedin.core.Reports.weekStart(today).toString(), from.text)
         assertEquals(today.toString(), to.text)
         assertEquals(1, table.rowCount)
-        assertTrue(rangeText(panel), rangeText(panel).startsWith("Range total 1h 00m"))
+        assertTrue(rangeText(panel), rangeText(panel).startsWith("Range total 01:00:00"))
 
         from.text = today.minusDays(60).toString()
         PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
         assertEquals(2, table.rowCount)
-        assertTrue(rangeText(panel), rangeText(panel).startsWith("Range total 2h 00m"))
+        assertTrue(rangeText(panel), rangeText(panel).startsWith("Range total 02:00:00"))
 
         to.text = today.minusDays(30).toString()
         assertEquals(1, table.rowCount)
@@ -162,7 +162,7 @@ class UiSnapshotTest : BasePlatformTestCase() {
         assertFalse(from.isEnabled)
         assertFalse(to.isEnabled)
         assertEquals(2, table.rowCount)
-        assertTrue(rangeText(panel), rangeText(panel).startsWith("All-time total 2h 00m"))
+        assertTrue(rangeText(panel), rangeText(panel).startsWith("All-time total 02:00:00"))
         snapshot(panel, "tool-window-all-dates.png")
         all.doClick()
         assertTrue(from.isEnabled)
@@ -194,13 +194,13 @@ class UiSnapshotTest : BasePlatformTestCase() {
             .none { it.templateText == "Remove" })
 
         assertEquals("Paid", table.getColumnName(Columns.PAID))
-        assertTrue(rangeText(panel), rangeText(panel).contains("unpaid 2h 00m · paid 0m"))
+        assertTrue(rangeText(panel), rangeText(panel).contains("unpaid 02:00:00 · paid 00:00:00"))
 
         // Paid checkbox on one row.
         table.setValueAt(true, 0, Columns.PAID)
         PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
         assertEquals(true, table.getValueAt(0, Columns.PAID))
-        assertTrue(rangeText(panel), rangeText(panel).contains("unpaid 1h 00m · paid 1h 00m"))
+        assertTrue(rangeText(panel), rangeText(panel).contains("unpaid 01:00:00 · paid 01:00:00"))
         filter.selectedItem = com.sterbenden.clockedin.core.PaidFilter.UNPAID
         PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
         assertEquals(1, table.rowCount)
@@ -309,7 +309,8 @@ class UiSnapshotTest : BasePlatformTestCase() {
         PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
         val totals = allOf<JLabel>(toolWindow.contentManager.getContent(0)!!.component)
             .first { it.text.orEmpty().startsWith("Today") }.text
-        assertTrue(totals, totals.startsWith("Today 4m (you 2m, agents 2m)"))
+        // 1.7 + 2.8 minutes, to the second, and the parts add up.
+        assertTrue(totals, totals.startsWith("Today 00:04:3") && totals.contains("(you 00:01:42, agents 00:02:4"))
     }
 
     fun `test agent notifications offer Undo`() {

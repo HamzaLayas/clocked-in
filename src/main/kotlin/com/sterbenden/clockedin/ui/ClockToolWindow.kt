@@ -429,7 +429,7 @@ private class ClockPanel(private val project: Project) : JPanel(BorderLayout()),
                         Instant.ofEpochMilli(s.start).atZone(zone).toLocalDate()
                     if (sameDay) Formats.time(end, zone) else Formats.dateTime(end, zone)
                 } ?: if (s.openBreak != null) "on a break" else "running"
-                Columns.BREAKS -> s.breakMs(now).let { if (it >= 60_000) Formats.duration(it) else "" }
+                Columns.BREAKS -> Formats.duration(s.breakMs(now))
                 Columns.WORKED -> Formats.duration(s.durationMs(now))
                 Columns.STARTED_BY -> ClockUi.startedByLabel(s)
                 Columns.STOPPED_BY -> ClockUi.stoppedByLabel(s)

@@ -121,7 +121,7 @@ object ClockUi {
 
     private fun breaksNote(s: Session, now: Long): String {
         val ms = s.breakMs(now)
-        return if (ms >= 60_000) " · breaks ${Formats.duration(ms)}" else ""
+        return if (ms >= 1_000) " · breaks ${Formats.duration(ms)}" else ""
     }
 
     fun tooltip(status: ClockStatus): String {
@@ -134,11 +134,11 @@ object ClockUi {
             "\nToday ${describe(status.today)} · this week ${describe(status.week)}\n$hint"
     }
 
-    /** "1h 30m (you 1h 00m, agents 30m)". The parts always add up to the total. */
+    /** "01:30:00 (you 01:00:00, agents 00:30:00)". The parts always add up to the total. */
     fun describe(t: Totals): String {
-        if (t.totalMs < 60_000) return Formats.duration(t.totalMs)
-        val agentMs = Formats.minutes(t.agentStartedMs) * 60_000
-        val youMs = Formats.minutes(t.totalMs) * 60_000 - agentMs
+        if (t.totalMs < 1_000) return Formats.duration(t.totalMs)
+        val agentMs = Formats.seconds(t.agentStartedMs) * 1000
+        val youMs = Formats.seconds(t.totalMs) * 1000 - agentMs
         return "${Formats.duration(t.totalMs)} (you ${Formats.duration(youMs)}, agents ${Formats.duration(agentMs)})"
     }
 
